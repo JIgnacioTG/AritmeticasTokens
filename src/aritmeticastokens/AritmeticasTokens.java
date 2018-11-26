@@ -407,6 +407,9 @@ public class AritmeticasTokens extends javax.swing.JFrame {
                     // numLinea tiene el numero de linea que estamos trabajando
                     numLinea = i + 1;
                     
+                    // elimina los tabs del codigo
+                    lineaCodigo[i] = lineaCodigo[i].replace("\t", "");
+                    
                     // el codigo esta dividido por espacios, se separan los tokens
                     String[] tempTokens = lineaCodigoTokens[i].split("\\s");
                     String[] tempCodigo = lineaCodigo[i].split("\\s");
@@ -450,8 +453,10 @@ public class AritmeticasTokens extends javax.swing.JFrame {
 
                                 // se verifica que si a continucación hay un IDE, si no se despliega un error y se termina la verificación de línea.
                                 if(!tempTokens[0].contains("IDE")) {
+                                    /*
                                     String valor = "Línea " +numLinea+ ": La instrucción aritmética está incorrecta: falta identificador inicial.";
                                     tokens.setELX(valor);
+                                    */
                                     continue;
                                 }
                             }
@@ -487,8 +492,10 @@ public class AritmeticasTokens extends javax.swing.JFrame {
                     
                     // si el primer token no es un identificador o un error de identificador, se considera un error adicional
                     if (!tempTokens[0].contains("IDE") && !tempTokens[0].contains("ELX") && !tempTokens[0].contains("PR")) {
+                        /*
                         String valor = "Línea " +numLinea+ ": La instrucción aritmética está incorrecta: falta identificador inicial.";
                         tokens.setELX(valor);
+                        */
                     }
                     
                     // en caso contrario se procede a eliminar dicho token
@@ -514,15 +521,17 @@ public class AritmeticasTokens extends javax.swing.JFrame {
                         // verificamos que no se haya declarado anteriormente
                         if (!tipoPR.equals("null") && !tipoBase.equals(tipoPR)) {
                             String valor = "Línea " +numLinea+ ": La instrucción aritmética está incorrecta: declaración duplicada.";
-                            tokens.setELX(valor);
+                            tokens.setEST(valor);
                         }
                     }
                     
                     // si el token no es un operador de asignacion o un error de identificador, se considera un errora adicional
                     if (!tempTokens[0].contains("OAS") && !tempTokens[0].contains("OR") && !tempTokens[0].contains("OB") && !tempTokens[0].contains("ELX") && !tempTokens[0].contains("DEL")) {
                         // pero si es un delimitador, se termina la revisión de la línea.
+                        /*
                         String valor = "Línea " +numLinea+ ": La instrucción aritmética está incorrecta: falta operador de asignación.";
                         tokens.setELX(valor);
+                        */
                     }
                     
                     // en caso contrario se procede a eliminar dicho token
@@ -537,8 +546,10 @@ public class AritmeticasTokens extends javax.swing.JFrame {
                     if (tempTokens.length > 1) {
                         // si el token no es un identificador, una constante númerica, una constante flotante o un error de identificador, se considera un error adicional
                         if (!tempTokens[0].contains("IDE") && !tempTokens[0].contains("CE") && !tempTokens[0].contains("CF") && !tempTokens[0].contains("ELX")) {
+                            /*
                             String valor = "Línea " +numLinea+ ": La instrucción aritmética está incorrecta: falta operando 1.";
                             tokens.setELX(valor);
+                            */
                         }
 
                         // en caso contrario se procede a verificar el semántico
@@ -634,8 +645,10 @@ public class AritmeticasTokens extends javax.swing.JFrame {
                             for (int h = 0; h < k; h++) {
                                 // si el token no es un identificador, una constante númerica, una constante flotante o un error de identificador, se considera un error adicional
                                 if (!tempTokens[0].contains("IDE") && !tempTokens[0].contains("CE") && !tempTokens[0].contains("CF") && !tempTokens[0].contains("ELX")) {
+                                    /*
                                     String valor = "Línea " +numLinea+ ": La instrucción aritmética está incorrecta: falta operando " +g+ ".";
                                     tokens.setELX(valor);
+                                    */
                                     g++;
                                 }
                                 
@@ -710,12 +723,18 @@ public class AritmeticasTokens extends javax.swing.JFrame {
 
                                 // si el token no es un operador aritmetico, un delimitador o un error de identificador, se considera un errora adicional
                                 if (!tempTokens[0].contains("OA") && !tempTokens[0].contains("DEL") && !tempTokens[0].contains("ELX")) {
+                                    /*
                                     String valor = "Línea " +numLinea+ ": La instrucción aritmética está incorrecta: falta operador aritmético o delimitador.";
                                     tokens.setELX(valor);
+                                    */
                                 }
 
                                 // en caso contrario se procede a eliminar dicho token
                                 else {
+                                    // se verifica si se esta realizando una division
+                                    if (tempTokens[0].contains("OA")) {
+                                        
+                                    }
                                     if (tempTokens.length > 1) {
                                         tempTokens = delDeArr(tempTokens, 0);
                                     }
@@ -733,10 +752,7 @@ public class AritmeticasTokens extends javax.swing.JFrame {
                 System.out.println("Índice del arreglo inalcanzable en la línea " + numLinea + " : " +ex.getMessage());
             }
             
-            // impresion del codigo optimizado
-            imprimirTexto("Código optimizado", codigo.replace(" ", ""));
-            
-            // imprimir texto
+            // impresion del código sin espacios
             imprimirTexto("Código optimizado", stbCodigo.toString());
         }
         
@@ -968,6 +984,11 @@ public class AritmeticasTokens extends javax.swing.JFrame {
     // metodo para la impresión del texto
     private void imprimirTexto(String titulo, String texto) {
         JOptionPane.showMessageDialog(null, texto, titulo, JOptionPane.INFORMATION_MESSAGE);
+    }
+    
+    // metodo para la optimizacion de código
+    private void optimizarCodigo() {
+        
     }
     
     /**
