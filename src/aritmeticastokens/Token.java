@@ -9,8 +9,8 @@ public class Token {
     // los int indican el numero del token
     // los arraylist almacen el tipo y valor del respectivo token
     private int numIDE, numOA, numOR, numOB, numCE, numCF, numELX, numPR, numEST;
-    private final ArrayList<String> tokenOA, valorOA, tokenOR, valorOR, tokenOB, valorOB, tokenCE, valorCE, tokenCF, valorCF, tokenTodo, valorTodo, tokenELX, valorELX, tokenPR, valorPR, tokenEST, valorEST;
-    private final ArrayList<String[]> tokenIDE, valorIDE;
+    private ArrayList<String> tokenOA, valorOA, tokenOR, valorOR, tokenOB, valorOB, tokenCE, valorCE, tokenCF, valorCF, tokenTodo, valorTodo, tokenELX, valorELX, tokenPR, valorPR, tokenEST, valorEST;
+    private ArrayList<String[]> tokenIDE, valorIDE;
     
     // se inicializa todo en el constructor
     public Token() {
@@ -65,6 +65,20 @@ public class Token {
         for (apun = 0; apun < tokenPR.size(); apun++) {
             
             if (token.equals(tokenPR.get(apun))) {
+                break;
+            }
+            
+        }
+        
+        return apun;
+    }
+    
+    public int buscarOA (String token) {
+        int apun;
+        
+        for (apun = 0; apun < tokenOA.size(); apun++) {
+            
+            if (token.equals(tokenOA.get(apun))) {
                 break;
             }
             
@@ -164,12 +178,14 @@ public class Token {
         nuevoIDE[0] = valor;
         valorIDE.set(apun, nuevoIDE);
         
+        /*
         for (int i = 0; i < tokenTodo.size(); i++) {
-                
+            
             if (tokenTodo.get(i).equals(tokenIDE.get(apun)[1])) {
                 valorTodo.set(apun, valor);
             }
         }
+        */
     }
     
     // metodo para guardar un operador aritmetico
@@ -523,10 +539,12 @@ public class Token {
                 tokenELX.add("ELX" +numELX);
                 valorELX.add(valor);
                 
+                /*
                 // despues en el ArrayList donde se escriben todos los tokens
                 tokenTodo.add("ELX" +numELX);
                 valorTodo.add(valor);
-                
+                */
+
                 // se aumenta el numero de Tokens registrados.
                 numELX++;
                 numIDE++;
@@ -535,9 +553,11 @@ public class Token {
             // si el token existe
             else {
                 
+                /*
                 // se registra el token en el ArrayList donde se escriben todos los tokens
                 tokenTodo.add(tokenELX.get(apunAux));
                 valorTodo.add(valorELX.get(apunAux));
+                */
             }
         }
         
@@ -548,9 +568,11 @@ public class Token {
             tokenELX.add("ELX" +numELX);
             valorELX.add(valor);
             
+            /*
             // despues en el ArrayList donde se escriben todos los tokens
             tokenTodo.add("ELX" +numELX);
             valorTodo.add(valor);
+            */
             
             // se aumenta el numero de Tokens registrados.
             numELX++;
@@ -589,9 +611,11 @@ public class Token {
                 tokenEST.add("EST" +numEST);
                 valorEST.add(valor);
                 
+                /*
                 // despues en el ArrayList donde se escriben todos los tokens
                 tokenTodo.add("EST" +numEST);
                 valorTodo.add(valor);
+                */
                 
                 // se aumenta el numero de Tokens registrados.
                 numEST++;
@@ -600,9 +624,11 @@ public class Token {
             // si el token existe
             else {
                 
+                /*
                 // se registra el token en el ArrayList donde se escriben todos los tokens
                 tokenTodo.add(tokenEST.get(apunAux));
                 valorTodo.add(valorEST.get(apunAux));
+                */
             }
         }
         
@@ -613,9 +639,11 @@ public class Token {
             tokenELX.add("EST" +numEST);
             valorELX.add(valor);
             
+            /*
             // despues en el ArrayList donde se escriben todos los tokens
             tokenTodo.add("EST" +numEST);
             valorTodo.add(valor);
+            */
             
             // se aumenta el numero de Tokens registrados.
             numEST++;
@@ -801,6 +829,13 @@ public class Token {
     
     public ArrayList<String> getValorEST() {
         return valorEST;
+    }
+    
+    public void reemplazarIDE(ArrayList<String[]> tokenIDE, ArrayList<String[]> valorIDE, ArrayList<String> tokenTodo, ArrayList<String> valorTodo) {
+        this.tokenIDE = tokenIDE;
+        this.valorIDE = valorIDE;
+        this.tokenTodo = tokenTodo;
+        this.valorTodo = valorTodo;
     }
 
 }

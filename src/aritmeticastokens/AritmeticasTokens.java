@@ -1,8 +1,12 @@
 package aritmeticastokens;
 
 // librerias
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.swing.JOptionPane;
@@ -22,6 +26,7 @@ public class AritmeticasTokens extends javax.swing.JFrame {
     DefaultTableModel dtmErrores = new DefaultTableModel();
     StringBuilder stbTokens = new StringBuilder();
     StringBuilder stbCodigo = new StringBuilder();
+    String codigoOptimizado = "";
 
     // constructor de la ventana
     public AritmeticasTokens() {
@@ -287,76 +292,15 @@ public class AritmeticasTokens extends javax.swing.JFrame {
             dtmPalabras.removeRow(0);  
         }
         
-        // stringbuilder para traspasar el codigo a tokens
-        stbTokens = new StringBuilder();
-        
         // se analizan los tokens
         busquedaTokens(jTextArea1.getText());
-        
-        // en stbtokens se empieza a escribir los tokens que se mostrarán en pantalla
-        for (int i = 0; i < tokens.getTokenTodo().size(); i++) {
-            String a = (tokens.getTokenTodo().get(i));
-            String b = a;
-            
-            if (i > 0) {
-                b = (tokens.getTokenTodo().get(i-1));
-            }
-            
-            
-            // si hay un delimitador, se hace un salto de linea
-            if (a.equalsIgnoreCase("DEL")) {
-                stbTokens.append(a);
-                stbTokens.append("\n");
-            }
-            
-            // si hay parentesis, se ignora dicho token
-            else if (a.equalsIgnoreCase("EXT1")) {
-            }
-            
-            // si hay parentesis, se ignora dicho token
-            else if (a.equalsIgnoreCase("EXT2")) {
-            }
-            
-            // si hay parentesis, se ignora dicho token
-            else if (a.contains("PR")) {
-                if (b.equalsIgnoreCase("EXT2")) {
-                    stbTokens.append("\n");
-                }
-                stbTokens.append(a);
-                stbTokens.append(" ");
-            }
-            
-            // si hay corchetes, se hace un salto de linea
-            else if (a.equalsIgnoreCase("SAL1")) {
-                stbTokens.append("\n");
-            }
-            
-            // si hay corchetes, se hace un salto de linea
-            else if (a.equalsIgnoreCase("SAL2")) {
-                /*if (!b.equalsIgnoreCase("DEL")) {
-                    stbTokens.append("\n");
-                }*/
-                if (b.equalsIgnoreCase("EXT2")) {
-                    stbTokens.append("\n");
-                }
-                stbTokens.append("\n");
-            }
-            
-            // en caso contrario, se escribe un espacio
-            else {
-                stbTokens.append(a);
-                stbTokens.append(" ");
-            }
-
-        }
         
         // si hay codigo escrito, se analiza en busca de errores faltantes y no de identificadores.
         if (!jTextArea1.getText().equals("")) {
             
             // se guarda el codigo de tokens en un auxiliar
-            String codigoTokens = stbTokens.toString();
+            String codigoTokens = imprimirTokens();
             String codigo = jTextArea1.getText();
-            StringBuilder stbCodigo = new StringBuilder();
             
             String[] lineaCodigoTokens;
             String[] lineaCodigo;
@@ -383,8 +327,6 @@ public class AritmeticasTokens extends javax.swing.JFrame {
                     stbLineaCodigo = new StringBuilder(lineaCodigo[i] + ";");
                     lineaCodigo[i] = stbLineaCodigo.toString();
                 }
-                System.out.println(lineaCodigo.length);
-                System.out.println(lineaCodigoTokens.length);
             }
             
             int numLinea = 0;
@@ -413,11 +355,9 @@ public class AritmeticasTokens extends javax.swing.JFrame {
                     // el codigo esta dividido por espacios, se separan los tokens
                     String[] tempTokens = lineaCodigoTokens[i].split("\\s");
                     String[] tempCodigo = lineaCodigo[i].split("\\s");
-                    String[] codigoSinEspacios = tempCodigo;
                     
                     
                     if(tempCodigo.length == 1) {
-                        stbCodigo.append(tempCodigo[0]);
                         continue;
                     }
                     
@@ -433,7 +373,6 @@ public class AritmeticasTokens extends javax.swing.JFrame {
                         
                         // primero buscaremos si la primera palabra es una instruccion do
                         if (PR.equalsIgnoreCase("do")) {
-                            stbCodigo.append(codigoSinEspacios[0]).append(codigoSinEspacios[1]).append("\n");
                             continue;
                         }
                         
@@ -441,15 +380,8 @@ public class AritmeticasTokens extends javax.swing.JFrame {
                             tipoPR = PR;
 
                             if (tempTokens.length > 1) {
-                                if (tempCodigo[1].equalsIgnoreCase("(")) {
-                                    stbCodigo.append(tempCodigo[0]);
-                                }
-                                else {
-                                    stbCodigo.append(tempCodigo[0] + " ");
-                                }
                                 tempTokens = delDeArr(tempTokens, 0);
                                 tempCodigo = delDeArr(tempCodigo, 0);
-                                codigoSinEspacios = delDeArr(codigoSinEspacios, 0);
 
                                 // se verifica que si a continucación hay un IDE, si no se despliega un error y se termina la verificación de línea.
                                 if(!tempTokens[0].contains("IDE")) {
@@ -463,32 +395,14 @@ public class AritmeticasTokens extends javax.swing.JFrame {
                         }
                         else {
                             if (tempTokens.length > 1) {
-                                if (tempCodigo[1].equalsIgnoreCase("(")) {
-                                    stbCodigo.append(tempCodigo[0]);
-                                }
-                                else {
-                                    stbCodigo.append(tempCodigo[0] + " ");
-                                }
                                 tempTokens = delDeArr(tempTokens, 0);
                                 tempCodigo = delDeArr(tempCodigo, 0);
-                                codigoSinEspacios = delDeArr(codigoSinEspacios, 0);
                             }
                             While = true;
                         }
                         
                     }
                     
-                    
-                    
-                    // se agrega el código
-                    for (int z = 0; z < codigoSinEspacios.length; z++) {
-                        stbCodigo.append(codigoSinEspacios[z]);
-                        
-                        // si es el ultimo caracter
-                        if (z == tempCodigo.length) {
-                            stbCodigo.append("\n");
-                        }
-                    }
                     
                     // si el primer token no es un identificador o un error de identificador, se considera un error adicional
                     if (!tempTokens[0].contains("IDE") && !tempTokens[0].contains("ELX") && !tempTokens[0].contains("PR")) {
@@ -731,9 +645,19 @@ public class AritmeticasTokens extends javax.swing.JFrame {
 
                                 // en caso contrario se procede a eliminar dicho token
                                 else {
-                                    // se verifica si se esta realizando una division
+                                    // se verifica si se trata de un operador aritmetico
                                     if (tempTokens[0].contains("OA")) {
                                         
+                                        // de ser asi, se verifica si se intenta realizar una division
+                                        int apunOA = tokens.buscarOA(tempTokens[0]);
+                                        if (tokens.getValorOA().get(apunOA).equals("/")) {
+                                            // si estamos en una base int, se debe desplegar un error
+                                            if(tipoBase.equals("int")) {
+                                                String valor = "Línea " +numLinea+ ": La instrucción aritmética está incorrecta: incompatibilidad de tipos.";
+                                                tokens.setEST(valor);
+                                                tokens.actualizarIDE(apunBase, "null");
+                                            }
+                                        }
                                     }
                                     if (tempTokens.length > 1) {
                                         tempTokens = delDeArr(tempTokens, 0);
@@ -752,9 +676,13 @@ public class AritmeticasTokens extends javax.swing.JFrame {
                 System.out.println("Índice del arreglo inalcanzable en la línea " + numLinea + " : " +ex.getMessage());
             }
             
-            // impresion del código sin espacios
-            imprimirTexto("Código optimizado", stbCodigo.toString());
         }
+        
+        // se optimiza el codigo
+        optimizarCodigo();
+        
+        // se escribe el codigo en tokens
+        jTextArea2.setText(imprimirTokens());
         
         // se llena la tabla de simbolos
         for (int i = 0; i < tokens.getTokenIDE().size(); i++) {
@@ -798,9 +726,6 @@ public class AritmeticasTokens extends javax.swing.JFrame {
         for (int i = 0; i < tokens.getTokenPR().size(); i++) {
             dtmPalabras.addRow(new Object[]{tokens.getValorPR().get(i),tokens.getTokenPR().get(i)});
         }
-        
-        // se escribe el codigo en tokens
-        jTextArea2.setText(stbTokens.toString());
         
     }//GEN-LAST:event_jButton1ActionPerformed
 
@@ -986,9 +911,214 @@ public class AritmeticasTokens extends javax.swing.JFrame {
         JOptionPane.showMessageDialog(null, texto, titulo, JOptionPane.INFORMATION_MESSAGE);
     }
     
+    // metodo para imprimir tokens
+    private String imprimirTokens() {
+        
+        // stringbuilder para traspasar el codigo a tokens
+        stbTokens = new StringBuilder();
+        
+        // en stbtokens se empieza a escribir los tokens que se mostrarán en pantalla
+        for (int i = 0; i < tokens.getTokenTodo().size(); i++) {
+            String a = (tokens.getTokenTodo().get(i));
+            String b = a;
+            
+            if (i > 0) {
+                b = (tokens.getTokenTodo().get(i-1));
+            }
+            
+            
+            // si hay un delimitador, se hace un salto de linea
+            if (a.equalsIgnoreCase("DEL")) {
+                stbTokens.append(a);
+                stbTokens.append("\n");
+            }
+            
+            // si hay parentesis, se ignora dicho token
+            else if (a.equalsIgnoreCase("EXT1")) {
+            }
+            
+            // si hay parentesis, se ignora dicho token
+            else if (a.equalsIgnoreCase("EXT2")) {
+            }
+            
+            // si hay parentesis, se ignora dicho token
+            else if (a.contains("PR")) {
+                if (b.equalsIgnoreCase("EXT2")) {
+                    stbTokens.append("\n");
+                }
+                stbTokens.append(a);
+                stbTokens.append(" ");
+            }
+            
+            // si hay corchetes, se hace un salto de linea
+            else if (a.equalsIgnoreCase("SAL1")) {
+                stbTokens.append("\n");
+            }
+            
+            // si hay corchetes, se hace un salto de linea
+            else if (a.equalsIgnoreCase("SAL2")) {
+                /*if (!b.equalsIgnoreCase("DEL")) {
+                    stbTokens.append("\n");
+                }*/
+                if (b.equalsIgnoreCase("EXT2")) {
+                    stbTokens.append("\n");
+                }
+                stbTokens.append("\n");
+            }
+            
+            // en caso contrario, se escribe un espacio
+            else {
+                stbTokens.append(a);
+                stbTokens.append(" ");
+            }
+
+        }
+        
+        return stbTokens.toString();
+    }
+    
     // metodo para la optimizacion de código
     private void optimizarCodigo() {
+        // se cargan las listas que contienen los tokens
+        ArrayList<String[]> tokenIDE = tokens.getTokenIDE(), valorIDE = tokens.getValorIDE();
+        ArrayList<String> tokenTodo = tokens.getTokenTodo(), valorTodo = tokens.getValorTodo();
         
+        // se busca en cada IDE si el valor se encuentra duplicado (instruccion 1)
+        for(int i = 0; i < valorIDE.size(); i++) {
+            
+            // no es necesario compararse consigo mismo.
+            int j = i + 1;
+            while (j < valorIDE.size()) {
+                // si el valor del IDE "i" es igual al valor del IDE "j"
+                if (valorIDE.get(i)[0].equals(valorIDE.get(j)[0])) {
+                    
+                    // se reemplaza en el arraylist de todos los tokens
+                    for (int k = 0; k < tokenTodo.size(); k++) {
+                        if (tokenTodo.get(k).equals(tokenIDE.get(j)[1])) {
+                            // si el token anterior es una PR, de igual manera eliminarlo
+                            if (tokenTodo.get(k-1).contains("PR")) {
+                                while (!tokenTodo.get(k-1).equals("DEL")) {
+                                    tokenTodo.remove(k-1);
+                                    valorTodo.remove(k-1);
+                                }
+                                tokenTodo.remove(k-1);
+                                valorTodo.remove(k-1);
+                            }
+                            else if (tokenTodo.get(k-1).contains("DEL")) {
+                                while (!tokenTodo.get(k).equals("DEL")) {
+                                    tokenTodo.remove(k);
+                                    valorTodo.remove(k);
+                                }
+                                tokenTodo.remove(k);
+                                valorTodo.remove(k);
+                            }
+                            else {
+                                // lo que era el token "j" sera el token "i".
+                                tokenTodo.set(k, tokenIDE.get(i)[1]);
+                                valorTodo.set(k, valorIDE.get(i)[1]);
+                            }
+                        }
+                    }
+                    
+                    // se elimina de los arraylist
+                    tokenIDE.remove(j);
+                    valorIDE.remove(j);
+                    
+                }
+                
+                j++;
+            }
+        }
+        
+        // los cambios se guardan
+        tokens.reemplazarIDE(tokenIDE, valorIDE, tokenTodo, valorTodo);
+        
+        // se hace un stb temporal para el codigo optimizado
+        StringBuilder stbOptimizado = new StringBuilder();
+        
+        // se escribe el código optimizado
+        for (int i = 0; i < valorTodo.size(); i++) {
+            String a = (tokens.getTokenTodo().get(i));
+            String b = a;
+            String aValor = (tokens.getValorTodo().get(i));
+            String bValor = aValor;
+            
+            if (i > 0) {
+                b = (tokens.getTokenTodo().get(i-1));
+                bValor = (tokens.getValorTodo().get(i-1));
+            }
+            
+            
+            // si hay un delimitador, se hace un salto de linea
+            if (a.equalsIgnoreCase("DEL")) {
+                if (tokens.getTokenTodo().get(i+1).equalsIgnoreCase("EXT2")) {
+                    stbOptimizado.append(aValor);
+                }
+                else {
+                    stbOptimizado.append(aValor);
+                    stbOptimizado.append("\n");
+                }
+            }
+            
+            // si hay parentesis, se ignora dicho token
+            else if (a.equalsIgnoreCase("EXT1")) {
+                stbOptimizado.append(aValor);
+            }
+            
+            // si hay parentesis, se ignora dicho token
+            else if (a.equalsIgnoreCase("EXT2")) {
+                stbOptimizado.append(aValor);
+            }
+            
+            // si hay parentesis, se ignora dicho token
+            else if (a.contains("PR")) {
+                if (b.equalsIgnoreCase("EXT2")) {
+                    stbOptimizado.append("\n");
+                }
+                stbOptimizado.append(aValor);
+                stbOptimizado.append(" ");
+            }
+            
+            // si hay corchetes, se hace un salto de linea
+            else if (a.equalsIgnoreCase("SAL1")) {
+                stbOptimizado.append("\n");
+                stbOptimizado.append(aValor);
+            }
+            
+            // si hay corchetes, se hace un salto de linea
+            else if (a.equalsIgnoreCase("SAL2")) {
+                stbOptimizado.append(aValor);
+                /*if (!b.equalsIgnoreCase("DEL")) {
+                    stbTokens.append("\n");
+                }*/
+                if (b.equalsIgnoreCase("EXT2")) {
+                    stbOptimizado.append("\n");
+                }
+                stbOptimizado.append("\n");
+            }
+            
+            // en caso contrario, se escribe un espacio
+            else {
+                stbOptimizado.append(aValor);
+            }
+            
+        }
+        
+        // se guarda el archivo
+        guardarArchivo("optimizado.txt", stbOptimizado.toString());
+    }
+    
+    public void guardarArchivo(String archivoExtension, String texto) {
+        
+        try {
+            FileWriter fw = new FileWriter(archivoExtension);
+            fw.write(texto);
+            fw.close();
+            JOptionPane.showConfirmDialog(null, "El archivo ''" +archivoExtension+ "'' ha sido guardado con éxito.", "Archivo guardado con éxito", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE);
+        }
+        catch (IOException ex) {
+            
+        }
     }
     
     /**
