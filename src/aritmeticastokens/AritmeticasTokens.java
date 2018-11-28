@@ -1051,23 +1051,28 @@ public class AritmeticasTokens extends javax.swing.JFrame {
             
             // si hay un delimitador, se hace un salto de linea
             if (a.equalsIgnoreCase("DEL")) {
-                if (tokens.getTokenTodo().get(i+1).equalsIgnoreCase("EXT2")) {
-                    stbOptimizado.append(aValor);
+                // si no es el último token
+                if (i < tokens.getTokenTodo().size()-1) {
+                    
+                    // verificar que lo que continua del delimitador es un corchete
+                    if (tokens.getTokenTodo().get(i+1).equalsIgnoreCase("SAL2")) {
+                        
+                        // solo se agrega el token
+                        stbOptimizado.append(aValor);
+                    }
+                    else {
+                        
+                        // en caso contrario se agrega el token y un espacio
+                        stbOptimizado.append(aValor);
+                        stbOptimizado.append("\n");
+                    }
                 }
+                
+                // si es el último agregar el delimitador tal cual.
                 else {
                     stbOptimizado.append(aValor);
-                    stbOptimizado.append("\n");
                 }
-            }
-            
-            // si hay parentesis, se ignora dicho token
-            else if (a.equalsIgnoreCase("EXT1")) {
-                stbOptimizado.append(aValor);
-            }
-            
-            // si hay parentesis, se ignora dicho token
-            else if (a.equalsIgnoreCase("EXT2")) {
-                stbOptimizado.append(aValor);
+                
             }
             
             // si hay parentesis, se ignora dicho token
