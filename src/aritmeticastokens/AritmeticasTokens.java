@@ -27,6 +27,7 @@ public class AritmeticasTokens extends javax.swing.JFrame {
     StringBuilder stbTokens = new StringBuilder();
     StringBuilder stbCodigo = new StringBuilder();
     String codigoOptimizado = "";
+    String saltoLn = System.getProperty("line.separator");
 
     // constructor de la ventana
     public AritmeticasTokens() {
@@ -930,7 +931,7 @@ public class AritmeticasTokens extends javax.swing.JFrame {
             // si hay un delimitador, se hace un salto de linea
             if (a.equalsIgnoreCase("DEL")) {
                 stbTokens.append(a);
-                stbTokens.append("\n");
+                stbTokens.append(saltoLn);
             }
             
             // si hay parentesis, se ignora dicho token
@@ -944,7 +945,7 @@ public class AritmeticasTokens extends javax.swing.JFrame {
             // si hay parentesis, se ignora dicho token
             else if (a.contains("PR")) {
                 if (b.equalsIgnoreCase("EXT2")) {
-                    stbTokens.append("\n");
+                    stbTokens.append(saltoLn);
                 }
                 stbTokens.append(a);
                 stbTokens.append(" ");
@@ -952,18 +953,18 @@ public class AritmeticasTokens extends javax.swing.JFrame {
             
             // si hay corchetes, se hace un salto de linea
             else if (a.equalsIgnoreCase("SAL1")) {
-                stbTokens.append("\n");
+                stbTokens.append(saltoLn);
             }
             
             // si hay corchetes, se hace un salto de linea
             else if (a.equalsIgnoreCase("SAL2")) {
                 /*if (!b.equalsIgnoreCase("DEL")) {
-                    stbTokens.append("\n");
+                    stbTokens.append(saltoLn);
                 }*/
                 if (b.equalsIgnoreCase("EXT2")) {
-                    stbTokens.append("\n");
+                    stbTokens.append(saltoLn);
                 }
-                stbTokens.append("\n");
+                stbTokens.append(saltoLn);
             }
             
             // en caso contrario, se escribe un espacio
@@ -1064,7 +1065,7 @@ public class AritmeticasTokens extends javax.swing.JFrame {
                         
                         // en caso contrario se agrega el token y un espacio
                         stbOptimizado.append(aValor);
-                        stbOptimizado.append("\n");
+                        stbOptimizado.append(saltoLn);
                     }
                 }
                 
@@ -1078,7 +1079,7 @@ public class AritmeticasTokens extends javax.swing.JFrame {
             // si hay parentesis, se ignora dicho token
             else if (a.contains("PR")) {
                 if (b.equalsIgnoreCase("EXT2")) {
-                    stbOptimizado.append("\n");
+                    stbOptimizado.append(saltoLn);
                 }
                 stbOptimizado.append(aValor);
                 stbOptimizado.append(" ");
@@ -1086,7 +1087,7 @@ public class AritmeticasTokens extends javax.swing.JFrame {
             
             // si hay corchetes, se hace un salto de linea
             else if (a.equalsIgnoreCase("SAL1")) {
-                stbOptimizado.append("\n");
+                stbOptimizado.append(saltoLn);
                 stbOptimizado.append(aValor);
             }
             
@@ -1094,12 +1095,12 @@ public class AritmeticasTokens extends javax.swing.JFrame {
             else if (a.equalsIgnoreCase("SAL2")) {
                 stbOptimizado.append(aValor);
                 /*if (!b.equalsIgnoreCase("DEL")) {
-                    stbTokens.append("\n");
+                    stbTokens.append(saltoLn);
                 }*/
                 if (b.equalsIgnoreCase("EXT2")) {
-                    stbOptimizado.append("\n");
+                    stbOptimizado.append(saltoLn);
                 }
-                stbOptimizado.append("\n");
+                stbOptimizado.append(saltoLn);
             }
             
             // en caso contrario, se escribe un espacio
@@ -1111,6 +1112,11 @@ public class AritmeticasTokens extends javax.swing.JFrame {
         
         // se guarda el archivo
         guardarArchivo("optimizado.txt", stbOptimizado.toString());
+    }
+    
+    // metodo para generar la tripleta
+    public void generarTripleta() {
+        
     }
     
     public void guardarArchivo(String archivoExtension, String texto) {
