@@ -5,8 +5,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.swing.JOptionPane;
@@ -682,6 +680,9 @@ public class AritmeticasTokens extends javax.swing.JFrame {
         // se optimiza el codigo
         optimizarCodigo();
         
+        // se genera el codigo intermedio
+        generarIntermedio();
+        
         // se escribe el codigo en tokens
         jTextArea2.setText(imprimirTokens());
         
@@ -1111,11 +1112,191 @@ public class AritmeticasTokens extends javax.swing.JFrame {
         }
         
         // se guarda el archivo
-        guardarArchivo("optimizado.txt", stbOptimizado.toString());
+        guardarArchivo("Optimizado.txt", stbOptimizado.toString());
     }
     
-    // metodo para generar la tripleta
-    public void generarTripleta() {
+    // metodo para generar el codigo intermedio
+    public void generarIntermedio() {
+        
+        // se recuperan las listas de tokens
+        ArrayList<String> tokenTodo = tokens.getTokenTodo();
+        ArrayList<String> valorTodo = tokens.getValorTodo();
+        
+        // Indica el numero de instruccion.
+        int numIns = 1;
+        
+        // Numero de tripleta
+        int numTrip = 1;
+        
+        // Numero de condicion
+        int numCon = 1;
+        
+        // Variables que almacenaran la tripleta
+        ArrayList<Integer> column1 = new ArrayList<>();
+        ArrayList<String> column2 = new ArrayList<>();
+        ArrayList<String> column3 = new ArrayList<>();
+        ArrayList<String> column4 = new ArrayList<>();
+        
+        // Listas que contienen las posiciones de los ciclos
+        ArrayList<Integer> insDo = new ArrayList<>();
+        
+        // Variables que almacenan el token de división y multiplicación.
+        String division = "";
+        String multiplicacion = "";
+        
+        try {
+            division = tokenTodo.get(valorTodo.indexOf("/"));
+        }
+        catch (ArrayIndexOutOfBoundsException ex) {
+            
+        }
+        
+        try {
+            multiplicacion = tokenTodo.get(valorTodo.indexOf("*"));
+        }
+        catch (ArrayIndexOutOfBoundsException ex) {
+            
+        }
+        
+        // Empieza la diversión, se verifica token por token.
+        for (int i = 0; i < tokenTodo.size(); i++) {
+            
+            // Si el token es una palabra reservada, se ignora.
+            if(tokenTodo.get(i).contains("PR")) {
+                
+                if (valorTodo.get(i).equalsIgnoreCase("do")) {
+                    insDo.add(numIns);
+                }
+                
+                // Si hay un while
+                else if (valorTodo.get(i).equalsIgnoreCase("while")) {
+                    
+                    // Se guarda en la tripleta la variable a comprobar
+                    column1.add(numIns);
+                    column2.add("T" +numTrip);
+                    column3.add(valorTodo.get(i+2));
+                    column4.add("=");
+                    numIns++;
+                    
+                    // Se analiza con que se debe comparar
+                    column1.add(numIns);
+                    column2.add("T" +numTrip);
+                    column3.add(valorTodo.get(i+4));
+                    column4.add(valorTodo.get(i+3));
+                    numIns++;
+                    
+                    // Si es verdadero, debe continuar con la siguiente instruccion.
+                    int sigIns = numIns + 2;
+                    column1.add(numIns);
+                    column2.add("TR" +numCon);
+                    column3.add("TRUE");
+                    column4.add(insDo.remove(insDo.size()-1)+"");
+                    numIns++;
+                    
+                    // Si es falso, se debe regresar al anterior do
+                    column1.add(numIns);
+                    column2.add("TR" +numCon);
+                    column3.add("FALSE");
+                    column4.add(sigIns+"");
+                    numIns++;
+                    numTrip++;
+                    numCon++;
+                    
+                }
+                
+                else {
+                    continue;
+                }
+                
+            }
+            
+            // Si el token es un operador de asignación.
+            if(tokenTodo.get(i).contains("OAS")) {
+                
+                // Se considera si hay un delimitador despúes de su siguiente token
+                if (tokenTodo.get(i+2).equalsIgnoreCase("DEL")) {
+                    
+                    // De ser así estamos ante una asignación simple y la tripleta.
+                    column1.add(numIns);
+                    column2.add(valorTodo.get(i-1));
+                    column3.add(valorTodo.get(i+1));
+                    column4.add("=");
+                    numIns++;
+                }
+                
+                // En este caso, tenemos una probable operación matemática.
+                else {
+                    
+                    // Variable a la que se asignará el resultado final.
+                    String variableAsig = valorTodo.get(i-1);
+                    
+                    // Se guarda en una lista nueva la operacion.
+                    ArrayList<String[]> tokensOp = new ArrayList<>();
+                    String[] token = new String[2];
+                    
+                    // Saltamos el guardado del operador de asignación.
+                    i++;
+                    
+                    while (!tokenTodo.get(i).equalsIgnoreCase("DEL")) {
+                        token = new String[2];
+                        token[0] = tokenTodo.get(i);
+                        token[1] = valorTodo.get(i);
+                        tokensOp.add(token);
+                        i++;
+                    }
+                    
+                    // Se va recorriendo la lista hasta que no queden variables por comparar
+                    while (tokensOp.size() > 1) {
+                        
+                        token = new String[2];
+                        
+                        // Se almacena la última variable en el triplo y se elimina de la lista.
+                        column1.add(numIns);
+                        column2.add("T" +numTrip);
+                        column3.add(tokensOp.remove(tokensOp.size()-1)[1]);
+                        column4.add("=");
+                        numIns++;
+                        
+                        // En el triplo se almacena la operacion realizada.
+                        column1.add(numIns);
+                        column2.add("T" +numTrip);
+                        column4.add(tokensOp.remove(tokensOp.size()-1)[1]);
+                        column3.add(tokensOp.remove(tokensOp.size()-1)[1]);
+                        numIns++;
+                        
+                        // Se agrega a la lista el triplo realizado.
+                        token[0] = "T" +numTrip;
+                        token[1] = "T" +numTrip;
+                        tokensOp.add(token);
+                        
+                        numTrip++;
+                    }
+                    
+                    // El resultado final es almacenado en la variable
+                    column1.add(numIns);
+                    column2.add(variableAsig);
+                    column3.add(tokensOp.get(0)[1]);
+                    column4.add("=");
+                    numIns++;
+                    
+                }
+            }
+        }
+        
+        // Ahora se genera el texto de la tripleta.
+        StringBuilder texto = new StringBuilder("\tDO\tDF\tO"+saltoLn);
+        
+        
+        for (int i = 0; i < column1.size(); i++) {
+            texto.append(column1.get(i)).append("\t")
+                    .append(column2.get(i)).append("\t")
+                    .append(column3.get(i)).append("\t")
+                    .append(column4.get(i)).append(saltoLn);
+        }
+        texto.append(column1.size()+1).append("\t...\t...\t...");
+        
+        // Se guarda el archivo.
+        guardarArchivo("Intermedio.txt", texto.toString());
         
     }
     
