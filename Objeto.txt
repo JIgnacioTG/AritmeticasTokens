@@ -1,0 +1,72 @@
+	MOV x, 2;
+	MOV y, 1;
+	MOV a, 2;
+	MOV b, 3.4;
+	MOV a, 5;
+	JMP ET1;
+
+ET1:
+	MOV BL, 2;
+	MOV BH, 4;
+	MUL BL, BH;
+	MOV BH, 2;
+	MUL BL, BH;
+	MOV AL, a;
+	MOV CL, BL;
+	DIV CL;
+	MOV BL, AL;
+	JMP ET2;
+
+ET2:
+	MOV BH, 2;
+	ADD BL, BH;
+	MOV x, BL;
+	JMP ET3;
+
+ET3:
+	MOV AL, x;
+	CMP AL, 1;
+	JL ET2;
+	JMP ET4;
+
+ET4:
+	MOV AL, b;
+	CMP AL, 9;
+	JLE ET1;
+	JMP ET5;
+
+ET5:
+	MOV BL, 5;
+	MOV BH, x;
+	MUL BL, BH;
+	MOV a, BL;
+	JMP ET6;
+
+ET6:
+	MOV AL, a;
+	CMP AL, y;
+	JGE ET5;
+	JMP ET5P2;
+
+ET5P2:
+	MOV BL, x;
+	MOV AH, 0;
+	MOV AL, BL;
+	MOV CL, b;
+	DIV CL;
+	MOV BL, AL;
+	MOV y, BL;
+	JMP ET7;
+
+ET7:
+	MOV AL, y;
+	CMP AL, 1;
+	JG ET5;
+	JMP END;
+
+END:
+	MOV BL, 1;
+	MOV BH, 2;
+	MUL BL, BH;
+	MOV a, BL;
+	EXIT;

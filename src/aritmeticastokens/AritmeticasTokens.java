@@ -4,6 +4,9 @@ package aritmeticastokens;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.EmptyStackException;
+import java.util.NoSuchElementException;
+import java.util.Stack;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -17,6 +20,12 @@ public class AritmeticasTokens extends javax.swing.JFrame {
     ArrayList<String> tipo = new ArrayList<>();
     ArrayList<String> tipotoken = new ArrayList<>();
     ArrayList<String> errores = new ArrayList<>();
+    ArrayList<Integer> column1;
+    ArrayList<String> column2;
+    ArrayList<String> column3;
+    ArrayList<String> column4;
+    ArrayList<Integer> posDo;
+    ArrayList<Integer> posWhile;
     DefaultTableModel dtmPalabras = new DefaultTableModel();
     DefaultTableModel dtmSimbolos = new DefaultTableModel();
     DefaultTableModel dtmOperadores = new DefaultTableModel();
@@ -260,7 +269,7 @@ public class AritmeticasTokens extends javax.swing.JFrame {
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         // TODO add your handling code here:
         
-        // nuevo objeto de tipo token
+        // nuevo column2 de tipo token
         tokens = new Token();
         
         // auxiliares para la limpieza de las tablas
@@ -330,11 +339,11 @@ public class AritmeticasTokens extends javax.swing.JFrame {
             
             int numLinea = 0;
             
-            try {
+            // se recorre cada linea
+            for (int i = 0; i < lineaCodigoTokens.length; i++) {
+            
+                try {
                 
-                // se recorre cada linea
-                for (int i = 0; i < lineaCodigoTokens.length; i++) {
-                    
                     // apuntador auxiliar y base que servirá para buscar el IDE
                     int apunIDE = -1;
                     int apunBase = -1;
@@ -343,7 +352,6 @@ public class AritmeticasTokens extends javax.swing.JFrame {
                     String tipoIDE = "null";
                     String tipoBase = "null";
                     String tipoPR = "null";
-                    Boolean While = false;
                     
                     // numLinea tiene el numero de linea que estamos trabajando
                     numLinea = i + 1;
@@ -355,6 +363,8 @@ public class AritmeticasTokens extends javax.swing.JFrame {
                     String[] tempTokens = lineaCodigoTokens[i].split("\\s");
                     String[] tempCodigo = lineaCodigo[i].split("\\s");
                     
+                    // booleano que ayuda identificar si la linea es un while
+                    Boolean isWhile = false;
                     
                     if(tempCodigo.length == 1) {
                         continue;
@@ -397,7 +407,7 @@ public class AritmeticasTokens extends javax.swing.JFrame {
                                 tempTokens = delDeArr(tempTokens, 0);
                                 tempCodigo = delDeArr(tempCodigo, 0);
                             }
-                            While = true;
+                            isWhile = true;
                         }
                         
                     }
@@ -469,7 +479,7 @@ public class AritmeticasTokens extends javax.swing.JFrame {
                         else {
                             // antes se debe verificar
                             // en caso de ser entero la base
-                            if (tipoBase.equals("int")) {
+                            if (tipoBase.equals("int") && !isWhile) {
                                 if (!tempTokens[0].contains("IDE")) {
                                     if (!tempTokens[0].contains("CE")) {
                                         String valor = "Línea " +numLinea+ ": La instrucción aritmética está incorrecta: incompatibilidad de tipos.";
@@ -569,7 +579,7 @@ public class AritmeticasTokens extends javax.swing.JFrame {
                                 else {
                                     // antes se debe verificar
                                     // en caso de ser entero la base
-                                    if (tipoBase.equals("int")) {
+                                    if (tipoBase.equals("int") && !isWhile) {
                                         if (!tempTokens[0].contains("IDE")) {
                                             if (!tempTokens[0].contains("CE")) {
                                                 String valor = "Línea " +numLinea+ ": La instrucción aritmética está incorrecta: incompatibilidad de tipos.";
@@ -669,10 +679,10 @@ public class AritmeticasTokens extends javax.swing.JFrame {
                     }
                          
                 }
-            }
-            
-            catch (ArrayIndexOutOfBoundsException ex) {
-                System.out.println("Índice del arreglo inalcanzable en la línea " + numLinea + " : " +ex.getMessage());
+                
+                catch (ArrayIndexOutOfBoundsException ex) {
+                    System.out.println("Índice del arreglo inalcanzable en la línea " + numLinea + " : " +ex.getMessage());
+                }
             }
             
         }
@@ -682,6 +692,9 @@ public class AritmeticasTokens extends javax.swing.JFrame {
         
         // se genera el codigo intermedio
         generarIntermedio();
+        
+        // se genera el codigo objeto
+        generarObjeto();
         
         // se escribe el codigo en tokens
         jTextArea2.setText(imprimirTokens());
@@ -1115,12 +1128,7 @@ public class AritmeticasTokens extends javax.swing.JFrame {
         guardarArchivo("Optimizado.txt", stbOptimizado.toString());
     }
     
-    // metodo para generar el codigo intermedio
-    public void generarIntermedio() {
-        
-        // se recuperan las listas de tokens
-        ArrayList<String> tokenTodo = tokens.getTokenTodo();
-        ArrayList<String> valorTodo = tokens.getValorTodo();
+    public void generarIntermedio () {
         
         // Indica el numero de instruccion.
         int numIns = 1;
@@ -1131,58 +1139,51 @@ public class AritmeticasTokens extends javax.swing.JFrame {
         // Numero de condicion
         int numCon = 1;
         
-        // Variables que almacenaran la tripleta
-        ArrayList<Integer> column1 = new ArrayList<>();
-        ArrayList<String> column2 = new ArrayList<>();
-        ArrayList<String> column3 = new ArrayList<>();
-        ArrayList<String> column4 = new ArrayList<>();
+        // Pila que contiene la posición de llamada del do.
+        Stack<Integer> insDo = new Stack<>();
         
-        // Listas que contienen las posiciones de los ciclos
-        ArrayList<Integer> insDo = new ArrayList<>();
+        // Se recargan las listas que contendran los tokens.
+        ArrayList<String> tokens = this.tokens.getTokenTodo();
+        ArrayList<String> valorTokens = this.tokens.getValorTodo();
         
-        // Variables que almacenan el token de división y multiplicación.
-        String division = "";
-        String multiplicacion = "";
-        
-        try {
-            division = tokenTodo.get(valorTodo.indexOf("/"));
-        }
-        catch (ArrayIndexOutOfBoundsException ex) {
-            
-        }
-        
-        try {
-            multiplicacion = tokenTodo.get(valorTodo.indexOf("*"));
-        }
-        catch (ArrayIndexOutOfBoundsException ex) {
-            
-        }
+        // Se inician las variables que almacenaran información del código intermedio.
+        column1 = new ArrayList<>();
+        column2 = new ArrayList<>();
+        column3 = new ArrayList<>();
+        column4 = new ArrayList<>();
+        posDo = new ArrayList<>();
+        posWhile = new ArrayList<>();
         
         // Empieza la diversión, se verifica token por token.
-        for (int i = 0; i < tokenTodo.size(); i++) {
+        for (int i = 0; i < tokens.size(); i++) {
             
-            // Si el token es una palabra reservada, se ignora.
-            if(tokenTodo.get(i).contains("PR")) {
+            // Si el token es una palabra reservada, se revisa de cual se trata.
+            if(tokens.get(i).contains("PR")) {
                 
-                if (valorTodo.get(i).equalsIgnoreCase("do")) {
-                    insDo.add(numIns);
+                // Si hay un do, se guarda el número de instrucción.
+                if (valorTokens.get(i).equalsIgnoreCase("do")) {
+                    posDo.add(numIns);
+                    insDo.push(numIns);
                 }
                 
                 // Si hay un while
-                else if (valorTodo.get(i).equalsIgnoreCase("while")) {
+                else if (valorTokens.get(i).equalsIgnoreCase("while")) {
+                    
+                    // Se guarda el inicio del while
+                    posWhile.add(numIns);
                     
                     // Se guarda en la tripleta la variable a comprobar
                     column1.add(numIns);
                     column2.add("T" +numTrip);
-                    column3.add(valorTodo.get(i+2));
+                    column3.add(valorTokens.get(i+2));
                     column4.add("=");
                     numIns++;
                     
                     // Se analiza con que se debe comparar
                     column1.add(numIns);
                     column2.add("T" +numTrip);
-                    column3.add(valorTodo.get(i+4));
-                    column4.add(valorTodo.get(i+3));
+                    column3.add(valorTokens.get(i+4));
+                    column4.add(valorTokens.get(i+3));
                     numIns++;
                     
                     // Si es verdadero, debe continuar con la siguiente instruccion.
@@ -1190,7 +1191,7 @@ public class AritmeticasTokens extends javax.swing.JFrame {
                     column1.add(numIns);
                     column2.add("TR" +numCon);
                     column3.add("TRUE");
-                    column4.add(insDo.remove(insDo.size()-1)+"");
+                    column4.add(insDo.pop()+"");
                     numIns++;
                     
                     // Si es falso, se debe regresar al anterior do
@@ -1211,15 +1212,14 @@ public class AritmeticasTokens extends javax.swing.JFrame {
             }
             
             // Si el token es un operador de asignación.
-            if(tokenTodo.get(i).contains("OAS")) {
-                
+            if(tokens.get(i).contains("OAS")) {
                 // Se considera si hay un delimitador despúes de su siguiente token
-                if (tokenTodo.get(i+2).equalsIgnoreCase("DEL")) {
+                if (tokens.get(i+2).equalsIgnoreCase("DEL")) {
                     
                     // De ser así estamos ante una asignación simple y la tripleta.
                     column1.add(numIns);
-                    column2.add(valorTodo.get(i-1));
-                    column3.add(valorTodo.get(i+1));
+                    column2.add(valorTokens.get(i-1));
+                    column3.add(valorTokens.get(i+1));
                     column4.add("=");
                     numIns++;
                 }
@@ -1228,54 +1228,280 @@ public class AritmeticasTokens extends javax.swing.JFrame {
                 else {
                     
                     // Variable a la que se asignará el resultado final.
-                    String variableAsig = valorTodo.get(i-1);
+                    String variableAsig = valorTokens.get(i-1);
                     
                     // Se guarda en una lista nueva la operacion.
-                    ArrayList<String[]> tokensOp = new ArrayList<>();
-                    String[] token = new String[2];
+                    ArrayList<String> valoresTokensOp = new ArrayList<>();
                     
                     // Saltamos el guardado del operador de asignación.
                     i++;
                     
-                    while (!tokenTodo.get(i).equalsIgnoreCase("DEL")) {
-                        token = new String[2];
-                        token[0] = tokenTodo.get(i);
-                        token[1] = valorTodo.get(i);
-                        tokensOp.add(token);
+                    while (!tokens.get(i).equalsIgnoreCase("DEL")) {
+                        valoresTokensOp.add(valorTokens.get(i));
                         i++;
                     }
                     
                     // Se va recorriendo la lista hasta que no queden variables por comparar
-                    while (tokensOp.size() > 1) {
+                    while (valoresTokensOp.size() > 1) {
                         
-                        token = new String[2];
+                        // Si hay un parentesis en la operación.
+                        if (valoresTokensOp.indexOf(")") != -1) {
+                            
+                            // Se almacenan las posiciones.
+                            int posFin = valoresTokensOp.indexOf(")");
+                            int posIni = posFin - 2;
+                            
+                            // Se revisa que antes dos tokens anteriores no sean "(".
+                            if (!valoresTokensOp.get(posIni).equalsIgnoreCase("(")) {
+                                
+                                // Se busca el inicio de este parentesis
+                                for (int n = posFin; n >= 0; n--) {
+                                    
+                                    // Si se encuentra el parentesis.
+                                    if (valoresTokensOp.get(n).equalsIgnoreCase("(")) {
+                                        // Se guarda la posicion.
+                                        posIni = n;
+                                        
+                                        // Se termina el ciclo.
+                                        break;
+                                    }
+                                }
+                                
+                                // Se guarda la operacion que se encuentra dentro del parentesis.
+                                ArrayList<String> tokensParentesis = new ArrayList<>();
+                                
+                                // Se recorre el arreglo hasta que encontremos el final del parentesis.
+                                int posReemplazo = posIni + 1;
+                                while(!valoresTokensOp.get(posReemplazo+1).equalsIgnoreCase(")")) {
+                                    // Se guarda la operacion
+                                    tokensParentesis.add(valoresTokensOp.remove(posReemplazo));
+                                    // Si es el último
+                                    if (valoresTokensOp.get(posReemplazo+1).equalsIgnoreCase(")")) {
+                                        tokensParentesis.add(valoresTokensOp.get(posReemplazo));
+                                    }
+                                }
+                                
+                                // Se analiza lo que se encuentra adentro del parentesis.
+                                while (tokensParentesis.size() > 1) {
+                                    
+                                    // Si hay una multiplicación en la operación.
+                                    if (tokensParentesis.lastIndexOf("*") != -1) {
+
+                                        // Se almacena la penúltima variable en el triplo y se elimina de la lista.
+                                        column1.add(numIns);
+                                        column2.add("T" +numTrip);
+                                        column3.add(tokensParentesis.remove(tokensParentesis.lastIndexOf("*")-1));
+                                        column4.add("=");
+                                        numIns++;
+
+                                        // En el triplo se almacena la operacion realizada.
+                                        column1.add(numIns);
+                                        column2.add("T" +numTrip);
+                                        column3.add(tokensParentesis.remove(tokensParentesis.lastIndexOf("*")+1));
+                                        column4.add(tokensParentesis.get(tokensParentesis.lastIndexOf("*")));
+                                        numIns++;
+
+                                        // Se agrega a la lista el triplo realizado.
+                                        tokensParentesis.set(tokensParentesis.lastIndexOf("*"),"T" +numTrip);
+
+                                        // Se aumenta el contador del triplo
+                                        numTrip++;
+
+                                        continue;
+                                    }
+
+                                    // Si hay una division en la operación.
+                                    else if (tokensParentesis.lastIndexOf("/") != -1) {
+
+                                        // Se almacena la antepenúltima variable en el triplo y se elimina de la lista.
+                                        column1.add(numIns);
+                                        column2.add("T" +numTrip);
+                                        column3.add(tokensParentesis.remove(tokensParentesis.lastIndexOf("/")-1));
+                                        column4.add("=");
+                                        numIns++;
+
+                                        // En el triplo se almacena la operacion realizada.
+                                        column1.add(numIns);
+                                        column2.add("T" +numTrip);
+                                        column3.add(tokensParentesis.remove(tokensParentesis.lastIndexOf("/")+1));
+                                        column4.add(tokensParentesis.get(tokensParentesis.lastIndexOf("/")));
+                                        numIns++;
+
+                                        // Se agrega a la lista el triplo realizado.
+                                        tokensParentesis.set(tokensParentesis.lastIndexOf("/"),"T" +numTrip);
+
+                                        // Se aumenta el contador del triplo
+                                        numTrip++;
+
+                                        continue;
+                                    }
+
+                                    // Si solo quedan sumas y restas.
+                                    else {
+
+                                        // Se almacena la antepenúltima variable en el triplo y se elimina de la lista.
+                                        column1.add(numIns);
+                                        column2.add("T" +numTrip);
+                                        column3.add(tokensParentesis.remove(tokensParentesis.size()-3));
+                                        column4.add("=");
+                                        numIns++;
+
+                                        // En el triplo se almacena la operacion realizada.
+                                        column1.add(numIns);
+                                        column2.add("T" +numTrip);
+                                        column3.add(tokensParentesis.remove(tokensParentesis.size()-1));
+                                        column4.add(tokensParentesis.remove(tokensParentesis.size()-1));
+                                        numIns++;
+
+                                        // Se agrega a la lista el triplo realizado.
+                                        tokensParentesis.add("T" +numTrip);
+
+                                        // Se aumenta el contador del triplo
+                                        numTrip++;
+                                    }
+                                    
+                                }
+                                
+                                // Ahora la variable temporal restante se pasa al valoresTokensOp.
+                                valoresTokensOp.set(posReemplazo, tokensParentesis.get(0));
+                                
+                                // El ciclo analiza la siguiente variable.
+                                continue;
+                                
+                            }
+                            
+                            // En este caso, la operación no tiene mas operaciones alrededor
+                            else {
+                                
+                                // Primero debemos comprobar que no estemos en el final del lado derecho.
+                                if (posFin < valoresTokensOp.size()-1) {
+                                    
+                                    // Se verifica que haya una suma, resta, multiplicacion, division o parentesis final del lado derecho
+                                    if (valoresTokensOp.get(posFin+1).equalsIgnoreCase("+") || valoresTokensOp.get(posFin+1).equalsIgnoreCase("-") || valoresTokensOp.get(posFin+1).equalsIgnoreCase("*") || valoresTokensOp.get(posFin+1).equalsIgnoreCase("/") || valoresTokensOp.get(posFin+1).equalsIgnoreCase(")")) {
+                                        
+                                        // De ser así, se elimina el parentesis
+                                        valoresTokensOp.remove(posFin);
+                                    }
+                                    
+                                    // En cualquier otro caso, se cambia el parentesis por una multiplicación
+                                    else {
+                                        valoresTokensOp.set(posFin, "*");
+                                    }
+                                        
+                                }
+                                
+                                // Al ser el final, solamente se elimina el parentesis.
+                                else {
+                                    valoresTokensOp.remove(posFin);
+                                }
+                                
+                                // Ahora debemos comprobar que no estemos al principio del lado izquierdo.
+                                if (posIni > 0) {
+                                    // Se verifica que haya una suma, resta, multiplicación, división o parentesis del lado izquierdo.
+                                    if (valoresTokensOp.get(posIni-1).equalsIgnoreCase("+") || valoresTokensOp.get(posIni-1).equalsIgnoreCase("-") || valoresTokensOp.get(posIni-1).equalsIgnoreCase("*") || valoresTokensOp.get(posIni-1).equalsIgnoreCase("/") || valoresTokensOp.get(posIni-1).equalsIgnoreCase(")") || valoresTokensOp.get(posIni-1).equalsIgnoreCase("(")) {
+                                        
+                                        // De ser así, se elimina el parentesis
+                                        valoresTokensOp.remove(posIni);
+                                    }
+                                    
+                                    // En cualquier otro caso, se cambia el parentesis por una multiplicación
+                                    else {
+                                        valoresTokensOp.set(posIni, "*");
+                                    }
+                                    
+                                }
+                                
+                                // Al ser el principio, solamente se elimina el parentesis.
+                                else {
+                                    valoresTokensOp.remove(posIni);
+                                }
+                                
+                            }
+                            
+                            continue;
+                        }
                         
-                        // Se almacena la última variable en el triplo y se elimina de la lista.
-                        column1.add(numIns);
-                        column2.add("T" +numTrip);
-                        column3.add(tokensOp.remove(tokensOp.size()-1)[1]);
-                        column4.add("=");
-                        numIns++;
+                        // Si hay una multiplicación en la operación.
+                        else if (valoresTokensOp.lastIndexOf("*") != -1) {
+                            
+                            // Se almacena la penúltima variable en el triplo y se elimina de la lista.
+                            column1.add(numIns);
+                            column2.add("T" +numTrip);
+                            column3.add(valoresTokensOp.remove(valoresTokensOp.lastIndexOf("*")-1));
+                            column4.add("=");
+                            numIns++;
+
+                            // En el triplo se almacena la operacion realizada.
+                            column1.add(numIns);
+                            column2.add("T" +numTrip);
+                            column3.add(valoresTokensOp.remove(valoresTokensOp.lastIndexOf("*")+1));
+                            column4.add(valoresTokensOp.get(valoresTokensOp.lastIndexOf("*")));
+                            numIns++;
+
+                            // Se agrega a la lista el triplo realizado.
+                            valoresTokensOp.set(valoresTokensOp.lastIndexOf("*"),"T" +numTrip);
+                            
+                            // Se aumenta el contador del triplo
+                            numTrip++;
+                            
+                            continue;
+                        }
                         
-                        // En el triplo se almacena la operacion realizada.
-                        column1.add(numIns);
-                        column2.add("T" +numTrip);
-                        column4.add(tokensOp.remove(tokensOp.size()-1)[1]);
-                        column3.add(tokensOp.remove(tokensOp.size()-1)[1]);
-                        numIns++;
+                        // Si hay una division en la operación.
+                        else if (valoresTokensOp.lastIndexOf("/") != -1) {
+                            
+                            // Se almacena la variable anterior en el triplo y se elimina de la lista.
+                            column1.add(numIns);
+                            column2.add("T" +numTrip);
+                            column3.add(valoresTokensOp.remove(valoresTokensOp.lastIndexOf("/")-1));
+                            column4.add("=");
+                            numIns++;
+
+                            // En el triplo se almacena la operacion realizada.
+                            column1.add(numIns);
+                            column2.add("T" +numTrip);
+                            column3.add(valoresTokensOp.remove(valoresTokensOp.lastIndexOf("/")+1));
+                            column4.add(valoresTokensOp.get(valoresTokensOp.lastIndexOf("/")));
+                            numIns++;
+
+                            // Se agrega a la lista el triplo realizado.
+                            valoresTokensOp.set(valoresTokensOp.lastIndexOf("/"),"T" +numTrip);
+                            
+                            // Se aumenta el contador del triplo
+                            numTrip++;
+                            
+                            continue;
+                        }
                         
-                        // Se agrega a la lista el triplo realizado.
-                        token[0] = "T" +numTrip;
-                        token[1] = "T" +numTrip;
-                        tokensOp.add(token);
-                        
-                        numTrip++;
+                        // Si solo quedan sumas y restas.
+                        else {
+                            
+                            // Se almacena la antepenúltima variable en el triplo y se elimina de la lista.
+                            column1.add(numIns);
+                            column2.add("T" +numTrip);
+                            column3.add(valoresTokensOp.remove(valoresTokensOp.size()-3));
+                            column4.add("=");
+                            numIns++;
+
+                            // En el triplo se almacena la operacion realizada.
+                            column1.add(numIns);
+                            column2.add("T" +numTrip);
+                            column3.add(valoresTokensOp.remove(valoresTokensOp.size()-1));
+                            column4.add(valoresTokensOp.remove(valoresTokensOp.size()-1));
+                            numIns++;
+
+                            // Se agrega a la lista el triplo realizado.
+                            valoresTokensOp.add("T" +numTrip);
+                            
+                            // Se aumenta el contador del triplo
+                            numTrip++;
+                        }
                     }
                     
                     // El resultado final es almacenado en la variable
                     column1.add(numIns);
                     column2.add(variableAsig);
-                    column3.add(tokensOp.get(0)[1]);
+                    column3.add(valoresTokensOp.get(0));
                     column4.add("=");
                     numIns++;
                     
@@ -1284,20 +1510,367 @@ public class AritmeticasTokens extends javax.swing.JFrame {
         }
         
         // Ahora se genera el texto de la tripleta.
-        StringBuilder texto = new StringBuilder("\tDO\tDF\tO"+saltoLn);
+        StringBuilder texto = new StringBuilder("\tDO\tDF\tO");
         
-        
+        texto.append(saltoLn);
         for (int i = 0; i < column1.size(); i++) {
             texto.append(column1.get(i)).append("\t")
                     .append(column2.get(i)).append("\t")
                     .append(column3.get(i)).append("\t")
                     .append(column4.get(i)).append(saltoLn);
         }
-        texto.append(column1.size()+1).append("\t...\t...\t...");
         
         // Se guarda el archivo.
         guardarArchivo("Intermedio.txt", texto.toString());
+    }
+    
+    public void generarObjeto() {
         
+        // Se crean variables referentes a los registros.
+        String AH = "";
+        String AL = "";
+        String BH = "";
+        String BL = "";
+        String CL = "";
+        
+        // Variables con el numero de ciclo y condicion.
+        int numCiclo = 1;
+        int numCon = 1;
+        int numEt = 1;
+        
+        // Se guarda la posición del primer do y while.
+        int insDo = 0;
+        int insWhile = 0;
+        try {
+            insDo = posDo.remove(0) - 1;
+            insWhile = posWhile.remove(0) - 1;
+        }
+        catch (IndexOutOfBoundsException ex) {
+            // No hay ciclos.
+            insDo = -1;
+            insWhile = -1;
+        }
+        
+        // Pila que almacena siempre el ultimo ciclo.
+        Stack<Integer> ultCiclo = new Stack<>();
+        
+        // En dado caso de que la pila se vacíe antes, se usa este String.
+        String ultCiclo2 = "";
+        
+        // Variable que contendrá el código ensamblador
+        StringBuilder texto = new StringBuilder();
+        
+        // Lo divertido del ensamblador comienza en esta parte.
+        for (int i = 0; i < column1.size(); i++) {
+            
+            // Se verifica si estamos ante una instruccion do.
+            if (i == insDo) {
+                
+                ultCiclo2 = "ET" + numEt;
+                texto.append(saltoLn).append(ultCiclo2).append(":").append(saltoLn);
+                ultCiclo.push(numEt);
+                numEt++;
+                
+                // Se elimina la posicion de este do.
+                try {
+                    while (insDo == posDo.get(0) - 1) {
+                        insDo = posDo.remove(0) - 1;
+                    }
+                    insDo = posDo.remove(0) - 1;
+                }
+                catch (IndexOutOfBoundsException ex) {
+                    // No hay más ciclos.
+                    insDo = -1;
+                }
+            }
+            
+            // Si estamos ante una instruccion while.
+            if (i == insWhile) {
+                
+                texto.append(saltoLn).append("ET").append(numEt).append(":").append(saltoLn);
+                numEt++;
+                
+                /*
+                // Se limpia lo que habia en AL.
+                if (!AL.isEmpty()) {
+                    texto.append("\tMOV AL, 0;").append(saltoLn);
+                    AL = "";
+                }
+                */
+                
+                // Se pasa la variable a comparar a AL.
+                texto.append("\tMOV AL, ").append(column3.get(i)).append(";").append(saltoLn);
+                AL = column3.get(i);
+                i++;
+                
+                // Ahora se compara lo que tiene AL.
+                texto.append("\tCMP AL, ").append(column3.get(i)).append(";").append(saltoLn);
+                AL = column3.get(i);
+                
+                // Se procede a leer que comparación se esta realizando.
+                // Si se trata de un menor.
+                if (column4.get(i).equalsIgnoreCase("<")) {
+                    try {
+                        ultCiclo.lastElement();
+                        texto.append("\tJL ET").append(ultCiclo.pop()).append(";").append(saltoLn);
+                    }
+                    catch (EmptyStackException | NoSuchElementException ex) {
+                        texto.append("\tJL ").append(ultCiclo2).append(";").append(saltoLn);
+                        ultCiclo2 = "";
+                    }
+                    
+                }
+                
+                // Si se trata de un menor o igual que.
+                else if (column4.get(i).equalsIgnoreCase("<=")) {
+                    try {
+                        ultCiclo.lastElement();
+                        texto.append("\tJLE ET").append(ultCiclo.pop()).append(";").append(saltoLn);
+                    }
+                    catch (EmptyStackException | NoSuchElementException ex) {
+                        texto.append("\tJLE ").append(ultCiclo2).append(";").append(saltoLn);
+                        ultCiclo2 = "";
+                    }
+                }
+                
+                // Si se trata de un mayor.
+                else if (column4.get(i).equalsIgnoreCase(">")) {
+                    try {
+                        ultCiclo.lastElement();
+                        texto.append("\tJG ET").append(ultCiclo.pop()).append(";").append(saltoLn);
+                    }
+                    catch (EmptyStackException | NoSuchElementException ex) {
+                        texto.append("\tJG ").append(ultCiclo2).append(";").append(saltoLn);
+                        ultCiclo2 = "";
+                    }
+                }
+                
+                // Si se trata de un mayor o igual que.
+                else if (column4.get(i).equalsIgnoreCase(">=")) {
+                    try {
+                        ultCiclo.lastElement();
+                        texto.append("\tJGE ET").append(ultCiclo.pop()).append(";").append(saltoLn);
+                    }
+                    catch (EmptyStackException | NoSuchElementException ex) {
+                        texto.append("\tJGE ").append(ultCiclo2).append(";").append(saltoLn);
+                        ultCiclo2 = "";
+                    }
+                }
+                
+                // Si se trata de un igual que.
+                else if (column4.get(i).equalsIgnoreCase("==")) {
+                    try {
+                        ultCiclo.lastElement();
+                        texto.append("\tJE ET").append(ultCiclo.pop()).append(";").append(saltoLn);
+                    }
+                    catch (EmptyStackException | NoSuchElementException ex) {
+                        texto.append("\tJE ").append(ultCiclo2).append(";").append(saltoLn);
+                        ultCiclo2 = "";
+                    }
+                }
+                
+                // Si se trata de un diferente de.
+                else if (column4.get(i).equalsIgnoreCase("!=")) {
+                    try {
+                        ultCiclo.lastElement();
+                        texto.append("\tJNE ET").append(ultCiclo.pop()).append(";").append(saltoLn);
+                    }
+                    catch (EmptyStackException | NoSuchElementException ex) {
+                        texto.append("\tJNE ").append(ultCiclo2).append(";").append(saltoLn);
+                        ultCiclo2 = "";
+                    }
+                }
+                
+                // Se saltan las dos saltoLns que contienen la instrucción while
+                i = i + 2;
+                
+                // Se elimina la posicion de este while.
+                try {
+                    insWhile = posWhile.remove(0) - 1;
+                }
+                catch (IndexOutOfBoundsException ex) {
+                    // No hay más ciclos.
+                    insWhile = -1;
+                }
+                
+                // Si a continuación no nos encontramos con un while o un do,
+                // se considera que es continuación del ciclo anterior.
+                if (i + 1 != insDo && i + 1 != insWhile && i + 1 < column1.size()) {
+                    if (!ultCiclo2.isEmpty()) {
+                        texto.append("\tJMP ").append(ultCiclo2).append("P2").append(";").append(saltoLn)
+                                .append(saltoLn)
+                                .append(ultCiclo2).append("P2").append(":").append(saltoLn);
+                    }
+                    else {
+                        texto.append("\tJMP END;").append(saltoLn)
+                                .append(saltoLn)
+                                .append("END:").append(saltoLn);
+                    }
+                }
+            }
+            
+            // Se verifica que el operador es una asignación.
+            else if (!column2.get(i).contains("T") && !column3.get(i).contains("T")) {
+                
+                texto.append("\tMOV ").append(column2.get(i)).append(", ").append(column3.get(i)).append(";").append(saltoLn);
+                
+            }
+            
+            // Si solamente la columna 2 no contiene una variable temporal, estamos ante una asignación.
+            else if (!column2.get(i).contains("T")) {
+                
+                // Se mueve de BL el resultado a la variable correspondiente.
+                texto.append("\tMOV ").append(column2.get(i)).append(", BL;").append(saltoLn);
+                
+                // Se limpia la variable para detectar que lo que almacena BH ya no es importante.
+                BL = "";
+                
+            }
+            
+            // De no ser ningun caso anterior, estamos ante una operación aritmetica.
+            else {
+                
+                // Si BL se encuentra vacía, se procede a realizar la operación.
+                if (BL.isEmpty()) {
+                    
+                    // Se mueve a BL el primer número.
+                    texto.append("\tMOV BL, ").append(column3.get(i)).append(";").append(saltoLn);
+                    BL = column3.get(i);
+                    
+                    // Se mueve al siguiente número.
+                    i++;
+                    
+                    // Si no estamos ante una división, se utiliza el registro BH
+                    if (!column4.get(i).equalsIgnoreCase("/")) {
+                        texto.append("\tMOV BH, ").append(column3.get(i)).append(";").append(saltoLn);
+                        BH = column3.get(i);
+                    }
+                    
+                    // Pero si se trata de una división.
+                    else {
+                        
+                        // Se limpia la parte alta de AX si no se encuentra vacía.
+                        if (!AH.isEmpty()) {
+                            texto.append("\tMOV AH, 0;").append(saltoLn);
+                            AH = "";
+                        }
+                        
+                        // Se pasa a AL el número a dividir.
+                        texto.append("\tMOV AL, BL;").append(saltoLn);
+                        
+                        // Se pasa a CL el divisor.
+                        texto.append("\tMOV CL, ").append(column3.get(i)).append(";").append(saltoLn);
+                        CL = column3.get(i);
+                        
+                        // Se realiza la división y se indica los registros con información.
+                        texto.append("\tDIV CL;").append(saltoLn);
+                        AH = "Residuo";
+                        AL = "Resultado";
+                        
+                        // Se guarda el resultado en BL.
+                        texto.append("\tMOV BL, AL;").append(saltoLn);
+                        BL = CL;
+                    }
+                    
+                    // Si se trata de una multiplicación.
+                    if (column4.get(i).equalsIgnoreCase("*")) {
+                        texto.append("\tMUL BL, BH;").append(saltoLn);
+                        BL = "BL * BH";
+                    }
+                    
+                    // Si se trata de una resta.
+                    else if (column4.get(i).equalsIgnoreCase("-")) {
+                        texto.append("\tSUB BL, BH;").append(saltoLn);
+                        BL = "BL - BH";
+                    }
+                    
+                    // Si se trata de una suma.
+                    else if (column4.get(i).equalsIgnoreCase("+")) {
+                        texto.append("\tADD BL, BH;").append(saltoLn);
+                        BL = "BL + BH";
+                    }
+                }
+                
+                // Si BL tiene guardada información, se utiliza la misma para seguir utilizandose.
+                else {
+                    
+                    // Si no estamos ante una división, se utiliza el registro BH
+                    if (!column4.get(i+1).equalsIgnoreCase("/")) {
+                        texto.append("\tMOV BH, ").append(column3.get(i)).append(";").append(saltoLn);
+                        BH = column3.get(i);
+                    }
+                    
+                    // Pero si se trata de una división.
+                    else {
+                        
+                        // Se limpia la parte alta de AX si no se encuentra vacía.
+                        if (!AH.isEmpty()) {
+                            texto.append("\tMOV AH, 0;").append(saltoLn);
+                            AH = "";
+                        }
+                        
+                        // Se pasa a AL el número a dividir.
+                        texto.append("\tMOV AL, ").append(column3.get(i)).append(";").append(saltoLn);
+                        
+                        // Se pasa a CL el divisor.
+                        texto.append("\tMOV CL, BL;").append(saltoLn);
+                        CL = BL;
+                        
+                        // Se realiza la división y se indica los registros con información.
+                        texto.append("\tDIV CL;").append(saltoLn);
+                        AH = "Residuo";
+                        AL = "Resultado";
+                        
+                        // Se guarda el resultado en BL.
+                        texto.append("\tMOV BL, AL;").append(saltoLn);
+                        BL = AL;
+                        
+                        // Se salta la instrucción que hace un guardado de dos temporales.
+                        i++;
+                    }
+                    
+                    // Se salta la instrucción que hace un guardado de dos temporales.
+                    i++;
+                    
+                    // Si se trata de una multiplicación.
+                    if (column4.get(i).equalsIgnoreCase("*")) {
+                        texto.append("\tMUL BL, BH;").append(saltoLn);
+                        BL = "BL * BH";
+                    }
+                    
+                    // Si se trata de una resta.
+                    else if (column4.get(i).equalsIgnoreCase("-")) {
+                        texto.append("\tSUB BL, BH;").append(saltoLn);
+                        BL = "BL - BH";
+                    }
+                    
+                    // Si se trata de una suma.
+                    else if (column4.get(i).equalsIgnoreCase("+")) {
+                        texto.append("\tADD BL, BH;").append(saltoLn);
+                        BL = "BL + BH";
+                    }
+                    
+                }
+                
+            }
+            
+            // Si la siguiente instrucción es un ciclo.
+            if (i + 1 == insDo || i + 1 == insWhile) {
+                
+                // Se escribe un salto hacia el ciclo.
+                texto.append("\tJMP ET").append(numEt).append(";").append(saltoLn);
+                
+            }
+            
+            // Si estamos en la ultima linea.
+            if (i + 1 == column1.size()) {
+                texto.append("\tEXIT;");
+            }
+            
+        }
+        
+        // Se guarda el archivo final.
+        guardarArchivo("Objeto.txt", texto.toString());
     }
     
     public void guardarArchivo(String archivoExtension, String texto) {
